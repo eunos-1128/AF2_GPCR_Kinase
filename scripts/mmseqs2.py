@@ -269,6 +269,8 @@ class MMSeqs2Runner:
                 sl = line.rstrip().split()
                 pdb = sl[1]
                 pdbid = pdb.split("_")[0]
+                # GPCRdb only accepts pdb codes in uppercase (otherwise the returned request will be empty)
+                pdbid = pdbid.upper()
                 if templates:
                     if templates[0] in ["Active", "Inactive", "Intermediate", "G protein", "Arrestin"] and pdbid not in check_duplicates and pdbid not in templates:
                         activation_state = templates[0]
