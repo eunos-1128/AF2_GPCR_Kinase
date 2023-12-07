@@ -265,13 +265,14 @@ class MMSeqs2Runner:
         with open(f"{ self.path }/pdb70.m8", "r") as infile:
 
             for line in infile:
-                 
+
                 sl = line.rstrip().split()
                 pdb = sl[1]
                 pdbid = pdb.split("_")[0]
                 # GPCRdb only accepts pdb codes in uppercase (otherwise the returned request will be empty)
                 pdbid = pdbid.upper()
                 if templates:
+                    print(templates)
                     if templates[0] in ["Active", "Inactive", "Intermediate", "G protein", "Arrestin"] and pdbid not in check_duplicates and pdbid not in templates:
                         activation_state = templates[0]
                         url = "http://gpcrdb.org/services/structure/{}".format( pdbid )
@@ -283,8 +284,8 @@ class MMSeqs2Runner:
                         elif type(rj) is dict and "signalling_protein" in rj:
                             if rj["signalling_protein"]["type"] == activation_state:
                                 pdbs.append(pdb)
-                                check_duplicates.append(pdbid)    
-                                            
+                                check_duplicates.append(pdbid)
+
                     if len(templates[0]) == 3 and pdbid not in check_duplicates and pdbid not in templates:
                         if templates[0][0] in ["in", "out", "out-like"]:
                             dfg = templates[0][0]
@@ -292,12 +293,12 @@ class MMSeqs2Runner:
                             dfg = "all"
                         else:
                             raise RuntimeError("DFG value invalid")
-                        if templates[0][1] in ["in", "out",]:    
+                        if templates[0][1] in ["in", "out",]:
                             ac_helix = templates[0][1]
                         elif templates[0][1] == "all":
                             ac_helix = "all"
                         else:
-                            raise RuntimeError("ac_helix value invalid")       
+                            raise RuntimeError("ac_helix value invalid")
                         if templates[0][2] in  ["yes", "no", "all"]:
                             salt_bridge = templates[0][2]
                         else:
@@ -306,7 +307,7 @@ class MMSeqs2Runner:
                         r = requests.get( url )
                         rj = r.json()
                         #print(rj)
-                        if rj[0] != 400:           
+                        if rj[0] != 400:
                             #take kinase_ID value and search for structure_conformation
                             structure_ID = rj[0]["structure_ID"]
                             url = "https://klifs.net/api_v2/structure_conformation?structure_ID={}".format( structure_ID )
@@ -347,38 +348,38 @@ class MMSeqs2Runner:
                                     check_duplicates.append(pdbid)
                             elif dfg == "all" and ac_helix == "all" and salt_bridge == "all":
                                 pdbs.append(pdb)
-                                check_duplicates.append(pdbid)                           
-                    
+                                check_duplicates.append(pdbid)
+
                     elif pdb in templates:
                         pdbs.append(sl[1])
                         logging.info(f"{ sl[0] }\t{ sl[1] }\t{ sl[2] }\t{ sl[10] }")
-        
+
         #write comma-seprated pdbs to file
         with open(f"{ self.path }/template_pdbs.txt", "w") as outfile:
             for pdb in pdbs:
                 outfile.write(f"{ pdb },")
-        
+
         return self.download_templates(pdbs)
-        
+
     def download_templates(self, pdbs) -> str:
         """Shuffle templates."""
-        
+
         path = f"{ self.job }_env/templates_101"
         if os.path.isdir(path):
             os.system(f"rm -r { path }")
-            
+
         if len(pdbs) == 0:
             logging.warning("No templates found.")
             return ""
         else:
             if not os.path.isdir(path):
                 os.mkdir(path)
-            
+
             if len(pdbs) > 1 and self.shuffling_templates:
                 random.shuffle(pdbs)
-            
+
             pdbs = ",".join(pdbs[: self.n_templates])
-        
+
             logging.info("TEMPLATE PDBS USED: " + pdbs)
 
             os.system(f"wget -q -O - { self.t_url }/{ pdbs } |tar xzf - -C { path }/")
@@ -441,9 +442,9 @@ class MMSeqs2Runner:
                 tar_gz.extractall(self.path)
 
         return self._process_alignment(a3m_files, templates)
-    
+
     def shuffle_templates(self) -> List:
-    
+
         r"""
         Run sequence alignments using MMseqs2
 
@@ -459,15 +460,15 @@ class MMSeqs2Runner:
         #read input file and extract the fir row in a list
         with open(f"{ self.path }/template_pdbs.txt", "r") as infile:
             pdbs = infile.read().split(",")
-        
+
         #remove last element of a list if it is empty
         if pdbs[-1] == "":
             pdbs.pop()
         print("READ_LIST: ", pdbs)
-        
+
         if len(pdbs) > 1:
             self.shuffling_templates=True
         else:
             logging.warning("Impossible to shuffle with 1 template only.")
-            
+
         return self.download_templates(pdbs)
