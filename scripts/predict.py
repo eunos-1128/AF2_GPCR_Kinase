@@ -170,7 +170,7 @@ def predict_structure_from_templates(
     n_struct_module_repeats: int = 8,
     ptm: bool = False,
     remove_msa_for_template_aligned: bool = False,
-) -> NoReturn:
+) -> Mapping[str, Any]:
 
     r"""Predicts the structure.
 
@@ -209,10 +209,10 @@ def predict_structure_from_templates(
     features_in = util.setup_features(
         seq, a3m_lines, util.mk_template(seq, a3m_lines, template_path).features
     )
-    
+
     if remove_msa_for_template_aligned:
         features_in = util.remove_msa_for_template_aligned_regions(features_in)
-        
+
     # Run the models
     model_runner = set_config(
         True,
@@ -333,20 +333,20 @@ def predict_structure_from_custom_template(
   """
 
   if random_seed == -1:
-      random_seed = random.randrange(sys.maxsize)  
+      random_seed = random.randrange(sys.maxsize)
 
   if model_id not in (1, 2):
       model_id = random.randint(1, 2)
 
   if model_params not in (1, 2):
-      model_params = random.randint(1, 2)          
+      model_params = random.randint(1, 2)
 
   print( "Prediction parameters:" )
   print( f"\tTemplate: { template_pdb }" )
   print( f"\tMaximum number of MSA clusters: { max_msa_clusters }" )
   print( f"\tMaximum number of extra MSA clusters: { max_extra_msa }" )
   print( f"\tMaximum number of recycling iterations: { max_recycles }" )
-        
+
   pdb = protein.from_pdb_string(  util.pdb2str( template_pdb ) )
   tempseq = util.pdb2seq(template_pdb)
   tfeatures_in = {
@@ -360,10 +360,10 @@ def predict_structure_from_custom_template(
   # Assemble the dictionary of input features
   features_in = util.setup_features(
       seq, a3m_lines, tfeatures_in)
-  
+
   if remove_msa_for_template_aligned:
         features_in = util.remove_msa_for_custom_template_aligned_regions(features_in)
-        
+
   # Run the models
   model_runner = set_config(
       True,
@@ -414,6 +414,6 @@ def to_pdb(
                         line[:21], line[22:60], plddts[seq_id], line[66:]
                     )
                 )
-    
+
     os.rename(f"b_{ outname }", outname)
 
